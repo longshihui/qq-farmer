@@ -88,7 +88,7 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
   }
 }
 
-/** Interpret a datetime-local value as a Beijing wall clock, independent of device timezone. */
+/** Interpret a date-time string as a Beijing wall clock, independent of device timezone. */
 export function parseBeijingDateTime(value: string): number | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value)
   if (!match) return null
@@ -113,7 +113,7 @@ export function parseBeijingDateTime(value: string): number | null {
 }
 
 export function toBeijingInput(timestamp: number): string {
-  return new Date(timestamp + BEIJING_OFFSET_MS).toISOString().slice(0, 19)
+  return new Date(timestamp + BEIJING_OFFSET_MS).toISOString().slice(0, 16)
 }
 
 export function formatBeijingMoment(timestamp: number): { date: string; time: string; full: string } {
@@ -123,10 +123,9 @@ export function formatBeijingMoment(timestamp: number): { date: string; time: st
   const day = date.getUTCDate()
   const hours = pad2(date.getUTCHours())
   const minutes = pad2(date.getUTCMinutes())
-  const seconds = pad2(date.getUTCSeconds())
   const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getUTCDay()]
   const dateText = `${year}年${month}月${day}日 · ${weekday}`
-  const time = `${hours}:${minutes}:${seconds}`
+  const time = `${hours}:${minutes}`
   return { date: dateText, time, full: `${dateText} ${time}` }
 }
 
@@ -143,12 +142,10 @@ export function formatDuration(totalSeconds: number): string {
 
 export function formatCountdown(readyAt: number, now: number): string {
   if (readyAt <= now) return '已经到点，可以收菜'
-  let seconds = Math.ceil((readyAt - now) / 1000)
-  const days = Math.floor(seconds / 86400)
-  seconds %= 86400
-  const hours = Math.floor(seconds / 3600)
-  seconds %= 3600
-  const minutes = Math.floor(seconds / 60)
-  seconds %= 60
-  return `还有 ${days ? `${days}天 ` : ''}${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`
+  let minutes = Math.ceil((readyAt - now) / 60000)
+  const days = Math.floor(minutes / 1440)
+  minutes %= 1440
+  const hours = Math.floor(minutes / 60)
+  minutes %= 60
+  return `还有 ${days ? `${days}天 ` : ''}${pad2(hours)}:${pad2(minutes)}`
 }

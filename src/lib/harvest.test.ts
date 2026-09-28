@@ -34,8 +34,8 @@ describe('calculateHarvest', () => {
       firstLand: 'black',
       secondLand: 'gold',
     })
-    expect(toBeijingInput(result.first.readyAt)).toBe('2026-09-28T05:12:00')
-    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-28T08:24:00')
+    expect(toBeijingInput(result.first.readyAt)).toBe('2026-09-28T05:12')
+    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-28T08:24')
     expect(result.second!.startSource).toBe('expected-first-harvest')
   })
 
@@ -49,8 +49,8 @@ describe('calculateHarvest', () => {
       secondLand: 'black',
       actualFirstHarvestAt,
     })
-    expect(toBeijingInput(result.first.readyAt)).toBe('2026-09-27T11:12:00')
-    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-27T13:48:00')
+    expect(toBeijingInput(result.first.readyAt)).toBe('2026-09-27T11:12')
+    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-27T13:48')
     expect(result.second!.startSource).toBe('actual-first-harvest')
   })
 
@@ -67,9 +67,10 @@ describe('calculateHarvest', () => {
 })
 
 describe('Beijing clock', () => {
-  it('interprets entered time as UTC+8 and keeps seconds', () => {
-    expect(parseBeijingDateTime('2026-09-27T08:00:09')).toBe(Date.UTC(2026, 8, 27, 0, 0, 9))
-    expect(formatBeijingMoment(Date.UTC(2026, 8, 27, 0, 0, 9)).time).toBe('08:00:09')
+  it('interprets entered minutes as UTC+8 and displays minutes', () => {
+    expect(parseBeijingDateTime('2026-09-27T08:00')).toBe(Date.UTC(2026, 8, 27, 0, 0))
+    expect(formatBeijingMoment(Date.UTC(2026, 8, 27, 0, 0, 9)).time).toBe('08:00')
+    expect(toBeijingInput(Date.UTC(2026, 8, 27, 0, 0, 9))).toBe('2026-09-27T08:00')
   })
 
   it('rejects impossible dates', () => {
@@ -79,5 +80,10 @@ describe('Beijing clock', () => {
 
   it('reports an elapsed countdown as ready', () => {
     expect(formatCountdown(plantedAt, plantedAt + 1000)).toBe('已经到点，可以收菜')
+  })
+
+  it('rounds remaining time up to a minute without showing seconds', () => {
+    expect(formatCountdown(plantedAt + 61000, plantedAt)).toBe('还有 00:02')
+    expect(formatCountdown(plantedAt + 60000, plantedAt)).toBe('还有 00:01')
   })
 })

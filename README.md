@@ -27,3 +27,9 @@ npm test
 - 第一次实际收菜时间留空时，第二季按第一季成熟时立即收菜估算；填写后按实际时间重新计算。实际时间不得早于第一季成熟时间。
 
 页面使用 Vite、React、TypeScript、Tailwind CSS 和 shadcn/ui。计算在浏览器内完成，输入不会上传或持久保存。
+
+## GitHub Pages 部署
+
+网站地址：<https://longshihui.github.io/qq-farmer/>。
+
+仓库的 **Settings → Pages → Build and deployment → Source** 设为 **GitHub Actions**。推送到 `main` 后，工作流会运行测试、以 `/qq-farmer/` 为资源基路径构建，并部署 `dist`。也可以在 **Actions → Deploy GitHub Pages → Run workflow** 手动部署。

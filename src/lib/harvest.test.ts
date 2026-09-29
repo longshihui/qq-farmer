@@ -19,23 +19,24 @@ describe('calculateHarvest', () => {
     [24, 'normal', 1440], [24, 'black', 1296], [24, 'gold', 1152],
   ]
 
-  it.each(expectedMinutes)('%s hours on %s land takes %s minutes', (growthHours, firstLand, minutes) => {
-    const result = calculateHarvest({ plantedAt, growthHours, seasons: 1, firstLand, secondLand: 'normal' })
+  it.each(expectedMinutes)('%s hours on %s land takes %s minutes', (growthHours, land, minutes) => {
+    const result = calculateHarvest({ plantedAt, growthHours, seasons: 1, land })
     expect(result.first.readyAt - plantedAt).toBe(minutes * 60 * 1000)
     expect(result.second).toBeUndefined()
   })
 
-  it('applies a separate bonus to the second season and crosses midnight', () => {
+  it('uses the same land in both seasons and crosses midnight', () => {
     const start = parseBeijingDateTime('2026-09-27T22:00:00')!
     const result = calculateHarvest({
       plantedAt: start,
       growthHours: 8,
       seasons: 2,
-      firstLand: 'black',
-      secondLand: 'gold',
+      land: 'black',
     })
     expect(toBeijingInput(result.first.readyAt)).toBe('2026-09-28T05:12')
-    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-28T08:24')
+    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-28T08:48')
+    expect(result.first.land).toBe('black')
+    expect(result.second!.land).toBe('black')
     expect(result.second!.startSource).toBe('expected-first-harvest')
   })
 
@@ -45,12 +46,11 @@ describe('calculateHarvest', () => {
       plantedAt,
       growthHours: 4,
       seasons: 2,
-      firstLand: 'gold',
-      secondLand: 'black',
+      land: 'gold',
       actualFirstHarvestAt,
     })
     expect(toBeijingInput(result.first.readyAt)).toBe('2026-09-27T11:12')
-    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-27T13:48')
+    expect(toBeijingInput(result.second!.readyAt)).toBe('2026-09-27T13:36')
     expect(result.second!.startSource).toBe('actual-first-harvest')
   })
 
@@ -59,8 +59,7 @@ describe('calculateHarvest', () => {
       plantedAt,
       growthHours: 4,
       seasons: 2,
-      firstLand: 'normal',
-      secondLand: 'normal',
+      land: 'normal',
       actualFirstHarvestAt: parseBeijingDateTime('2026-09-27T11:59:59'),
     })).toThrow(RangeError)
   })

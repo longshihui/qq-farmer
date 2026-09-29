@@ -18,8 +18,7 @@ export interface HarvestInput {
   plantedAt: number
   growthHours: GrowthHours
   seasons: SeasonCount
-  firstLand: LandType
-  secondLand: LandType
+  land: LandType
   actualFirstHarvestAt?: number | null
 }
 
@@ -47,7 +46,7 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
   }
 
   const firstBaseSeconds = input.growthHours * 60 * 60
-  const firstDurationSeconds = firstBaseSeconds * LAND[input.firstLand].tenths / 10
+  const firstDurationSeconds = firstBaseSeconds * LAND[input.land].tenths / 10
   const firstReadyAt = input.plantedAt + firstDurationSeconds * 1000
   const first: SeasonSchedule = {
     season: 1,
@@ -55,7 +54,7 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
     readyAt: firstReadyAt,
     baseDurationSeconds: firstBaseSeconds,
     durationSeconds: firstDurationSeconds,
-    land: input.firstLand,
+    land: input.land,
     startSource: 'planting',
   }
 
@@ -69,7 +68,7 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
   }
 
   const secondBaseSeconds = firstBaseSeconds / 2
-  const secondDurationSeconds = secondBaseSeconds * LAND[input.secondLand].tenths / 10
+  const secondDurationSeconds = secondBaseSeconds * LAND[input.land].tenths / 10
   const secondStartAt = actualFirstHarvestAt ?? firstReadyAt
 
   return {
@@ -80,7 +79,7 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
       readyAt: secondStartAt + secondDurationSeconds * 1000,
       baseDurationSeconds: secondBaseSeconds,
       durationSeconds: secondDurationSeconds,
-      land: input.secondLand,
+      land: input.land,
       startSource: actualFirstHarvestAt == null
         ? 'expected-first-harvest'
         : 'actual-first-harvest',

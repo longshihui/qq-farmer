@@ -28,7 +28,7 @@ body {
   align-items: start;
 }
 
-.form-card, .result-card, .details-card { border-radius: 12px; }
+.form-card, .conclusion-card { border-radius: 12px; }
 .form-card .n-form-item { margin-bottom: 22px; }
 .form-card .n-form-item:last-child { margin-bottom: 0; }
 
@@ -43,15 +43,9 @@ body {
 .field-error { color: #d03050; }
 .field-hint { color: #8a9099; }
 
-.results-column { display: flex; min-width: 0; flex-direction: column; gap: 16px; }
-.result-card .n-card__content { min-height: 155px; }
-.result-card .n-empty { margin-top: 26px; }
-.result-date { margin: 2px 0 4px; color: #66707b; font-size: 14px; }
-.result-time { display: block; margin-bottom: 16px; font-size: clamp(46px, 6vw, 68px); font-weight: 600; line-height: 1.1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.result-source { color: #8a9099; font-size: 12px; }
+.results-column { min-width: 0; }
 
-.details-card .n-timeline { margin-top: 12px; margin-bottom: 24px; }
-.details-card.is-collapsed .n-card__content { display: none; }
+.conclusion-card .n-timeline { margin-top: 12px; margin-bottom: 24px; }
 .calculation-note { margin: 12px 0 0; color: #8a9099; font-size: 12px; }
 
 @media (max-width: 780px) {

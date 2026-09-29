@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   NButton, NCard, NConfigProvider,
   NDatePicker, NDescriptions, NDescriptionsItem, NEmpty, NForm,
   NFormItem, NRadioButton, NRadioGroup, NSelect,
-  NTag, NTimeline, NTimelineItem, dateZhCN, zhCN,
+  NTimeline, NTimelineItem, dateZhCN, zhCN,
 } from 'naive-ui'
 import {
-  calculateHarvest, formatBeijingMoment, formatCountdown,
+  calculateHarvest, formatBeijingMoment,
   formatDuration, GROWTH_HOURS, LAND, parseBeijingDateTime,
   toBeijingInput, type GrowthHours, type HarvestSchedule,
   type LandType, type SeasonCount, type SeasonSchedule,
@@ -25,15 +25,11 @@ const landOptions = (Object.keys(LAND) as LandType[]).map((value) => ({
 }))
 const pickerActions: Array<'clear' | 'confirm'> = ['clear', 'confirm']
 
-const now = ref(Date.now())
-const plantedAtInput = ref<string | null>(toBeijingInput(now.value))
+const plantedAtInput = ref<string | null>(toBeijingInput(Date.now()))
 const growthHours = ref<GrowthHours>(4)
 const seasons = ref<SeasonCount>(1)
-const firstLand = ref<LandType>('normal')
-const secondLand = ref<LandType>('normal')
+const land = ref<LandType>('normal')
 const actualFirstHarvestInput = ref<string | null>(null)
-const detailsExpanded = ref(false)
-let clockTimer: number | undefined
 
 const view = computed<ViewState>(() => {
   const plantedAt = parseBeijingDateTime(plantedAtInput.value ?? '')
@@ -45,8 +41,7 @@ const view = computed<ViewState>(() => {
     plantedAt,
     growthHours: growthHours.value,
     seasons: seasons.value,
-    firstLand: firstLand.value,
-    secondLand: secondLand.value,
+    land: land.value,
   }
   const baseSchedule = calculateHarvest(baseInput)
   if (seasons.value === 1 || !actualFirstHarvestInput.value) {
@@ -96,40 +91,25 @@ function isLandType(value: unknown): value is LandType {
   return value === 'normal' || value === 'black' || value === 'gold'
 }
 
-function updateFirstLand(value: unknown) {
-  if (isLandType(value)) firstLand.value = value
-}
-
-function updateSecondLand(value: unknown) {
-  if (isLandType(value)) secondLand.value = value
+function updateLand(value: unknown) {
+  if (isLandType(value)) land.value = value
 }
 
 function useCurrentTime() {
-  now.value = Date.now()
-  plantedAtInput.value = toBeijingInput(now.value)
+  plantedAtInput.value = toBeijingInput(Date.now())
 }
 
 function reset() {
-  now.value = Date.now()
-  plantedAtInput.value = toBeijingInput(now.value)
+  plantedAtInput.value = toBeijingInput(Date.now())
   growthHours.value = 4
   seasons.value = 1
-  firstLand.value = 'normal'
-  secondLand.value = 'normal'
+  land.value = 'normal'
   actualFirstHarvestInput.value = null
 }
 
 function seasonFormula(schedule: SeasonSchedule): string {
   return `${formatDuration(schedule.baseDurationSeconds)} × ${(LAND[schedule.land].tenths / 10).toFixed(1)} = ${formatDuration(schedule.durationSeconds)}`
 }
-
-onMounted(() => {
-  clockTimer = window.setInterval(() => { now.value = Date.now() }, 1000)
-})
-
-onUnmounted(() => {
-  if (clockTimer !== undefined) window.clearInterval(clockTimer)
-})
 </script>
 
 <template>
@@ -170,14 +150,11 @@ onUnmounted(() => {
               </NRadioGroup>
             </NFormItem>
 
-            <NFormItem label="第一季土地">
-              <NSelect :value="firstLand" :options="landOptions" @update:value="updateFirstLand" />
+            <NFormItem label="土地">
+              <NSelect :value="land" :options="landOptions" @update:value="updateLand" />
             </NFormItem>
 
             <template v-if="seasons === 2">
-              <NFormItem label="第二季土地">
-                <NSelect :value="secondLand" :options="landOptions" @update:value="updateSecondLand" />
-              </NFormItem>
               <NFormItem label="第一次实际收菜时间（可选）">
                 <NDatePicker
                   class="datetime-picker" type="datetime" format="yyyy-MM-dd HH:mm"
@@ -192,35 +169,9 @@ onUnmounted(() => {
           </NForm>
         </NCard>
 
-        <section class="results-column" aria-label="收菜时间结果">
-          <NCard title="第一季" class="result-card">
+        <section class="results-column" aria-label="计算结论">
+          <NCard title="计算结论" class="conclusion-card">
             <template v-if="first">
-              <p class="result-date">{{ formatBeijingMoment(first.readyAt).date }}</p>
-              <time class="result-time" :datetime="new Date(first.readyAt).toISOString()">{{ formatBeijingMoment(first.readyAt).time }}</time>
-              <NTag :type="first.readyAt <= now ? 'success' : 'info'" round>{{ formatCountdown(first.readyAt, now) }}</NTag>
-            </template>
-            <NEmpty v-else description="填写播种时间后显示结果" />
-          </NCard>
-
-          <NCard v-if="seasons === 2" title="第二季" class="result-card">
-            <template #header-extra>
-              <span class="result-source">{{ actualFirstHarvestInput && !view.actualError ? '按实际收菜时间' : '预计时间' }}</span>
-            </template>
-            <template v-if="second">
-              <p class="result-date">{{ formatBeijingMoment(second.readyAt).date }}</p>
-              <time class="result-time" :datetime="new Date(second.readyAt).toISOString()">{{ formatBeijingMoment(second.readyAt).time }}</time>
-              <NTag :type="second.readyAt <= now ? 'success' : 'info'" round>{{ formatCountdown(second.readyAt, now) }}</NTag>
-            </template>
-            <NEmpty v-else :description="view.actualError ? '请修正第一次实际收菜时间' : '填写播种时间后显示结果'" />
-          </NCard>
-
-          <NCard title="计算说明" class="details-card" :class="{ 'is-collapsed': !detailsExpanded }">
-            <template #header-extra>
-              <NButton text :aria-expanded="detailsExpanded" @click="detailsExpanded = !detailsExpanded">
-                {{ detailsExpanded ? '收起' : '展开' }}
-              </NButton>
-            </template>
-            <template v-if="detailsExpanded && first">
               <NTimeline>
                 <NTimelineItem title="播种" :time="formatBeijingMoment(first.startAt).full" />
                 <NTimelineItem title="第一季成熟" :time="formatBeijingMoment(first.readyAt).full" />
@@ -238,7 +189,7 @@ onUnmounted(() => {
                 第二季从{{ second.startSource === 'actual-first-harvest' ? '第一次实际收菜时间' : '第一季预计成熟时间' }}开始计算。
               </p>
             </template>
-            <NEmpty v-else-if="detailsExpanded" description="填写播种时间后显示计算过程" />
+            <NEmpty v-else description="填写播种时间后显示计算结论" />
           </NCard>
         </section>
       </div>

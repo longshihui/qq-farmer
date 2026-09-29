@@ -1,18 +1,7 @@
-export const GROWTH_HOURS = [4, 8, 12, 24] as const
+import { LAND, type GrowthHours, type LandType, type SeasonCount } from '../config'
 
-export type GrowthHours = (typeof GROWTH_HOURS)[number]
-export type SeasonCount = 1 | 2
-export type LandType = 'normal' | 'black' | 'gold'
-
-export const LAND = {
-  normal: { label: '普通土地', reduction: 0, tenths: 10 },
-  black: { label: '黑土地', reduction: 10, tenths: 9 },
-  gold: { label: '金土地', reduction: 20, tenths: 8 },
-} as const satisfies Record<LandType, {
-  label: string
-  reduction: number
-  tenths: number
-}>
+export { GROWTH_HOURS, LAND, SEASON_COUNTS } from '../config'
+export type { GrowthHours, LandType, SeasonCount } from '../config'
 
 export interface HarvestInput {
   plantedAt: number

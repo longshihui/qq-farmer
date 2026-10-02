@@ -19,7 +19,7 @@ const { activeView, updateActiveView } = useViewSwitch()
 
 <template>
   <NConfigProvider :locale="zhCN" :date-locale="dateZhCN">
-    <main class="page-shell">
+    <main class="page-shell" :class="{ 'page-shell--planner': activeView === 'daily' }">
       <header class="page-header">
         <h1>田间时刻</h1>
         <p>收菜时间计算与全天规划 · 北京时间</p>

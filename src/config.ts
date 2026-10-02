@@ -40,9 +40,9 @@ export const SEED_TYPES = [
 
 /** 全天规划在最高经验权重方案中的收菜次数偏好。 */
 export const HARVEST_COUNT_PREFERENCES = [
-  { value: 'fewer', label: '次数较少' },
-  { value: 'middle', label: '中等次数' },
-  { value: 'more', label: '次数较多' },
+  { value: 'fewer', label: '次数最少' },
+  { value: 'middle', label: '平衡' },
+  { value: 'more', label: '次数最多' },
 ] as const
 
 export type LandType = keyof typeof LAND

@@ -98,7 +98,7 @@ function useHarvestResult(inputs: Pick<ReturnType<typeof useHarvestForm>,
       return { schedule: baseSchedule, plantingError: null, actualError: '请输入有效的第一次实际收菜时间。' }
     }
     if (actualFirstHarvestAt < baseSchedule.first.readyAt) {
-      return { schedule: baseSchedule, plantingError: null, actualError: '实际收菜时间不能早于第一季成熟时间。' }
+      return { schedule: baseSchedule, plantingError: null, actualError: '实际收菜时间不能早于第一季最早可收菜时间。' }
     }
 
     return {
@@ -113,12 +113,16 @@ function useHarvestResult(inputs: Pick<ReturnType<typeof useHarvestForm>,
   const actualFirstHarvestAt = computed(() => inputs.actualFirstHarvestInput.value
     ? parseBeijingDateTime(inputs.actualFirstHarvestInput.value)
     : null)
+  const firstHarvestAt = computed(() => second.value?.startSource === 'actual-first-harvest'
+    ? actualFirstHarvestAt.value ?? first.value?.readyAt : first.value?.readyAt)
+  const firstHarvestTitle = computed(() => second.value?.startSource === 'actual-first-harvest'
+    ? '第一季实际收菜 · 第二季起算' : '第一季预计收菜')
 
   function seasonFormula(schedule: SeasonSchedule): string {
     return `${formatDuration(schedule.baseDurationSeconds)} × ${(LAND[schedule.land].tenths / 10).toFixed(1)} = ${formatDuration(schedule.durationSeconds)}`
   }
 
-  return { view, first, second, actualFirstHarvestAt, seasonFormula }
+  return { view, first, second, firstHarvestAt, firstHarvestTitle, seasonFormula }
 }
 
 const {
@@ -126,7 +130,7 @@ const {
   actualFirstHarvestInput, updatePlantedAt, updateActualHarvest,
   updateGrowthHours, updateSeasons, updateLand, setCurrentTime, reset,
 } = useHarvestForm()
-const { view, first, second, actualFirstHarvestAt, seasonFormula } = useHarvestResult({
+const { view, first, second, firstHarvestAt, firstHarvestTitle, seasonFormula } = useHarvestResult({
   plantedAtInput, growthHours, seasons, land, actualFirstHarvestInput,
 })
 </script>
@@ -175,7 +179,7 @@ const { view, first, second, actualFirstHarvestAt, seasonFormula } = useHarvestR
             />
           </NFormItem>
           <p v-if="view.actualError" class="field-error" role="alert">{{ view.actualError }}</p>
-          <p v-else class="field-hint">留空时，按第一季成熟后立即收菜估算。</p>
+          <p v-else class="field-hint">留空时，按第一季最早可收菜时间估算。</p>
         </template>
       </NForm>
     </NCard>
@@ -185,19 +189,15 @@ const { view, first, second, actualFirstHarvestAt, seasonFormula } = useHarvestR
         <template v-if="first">
           <NTimeline>
             <NTimelineItem title="播种" :time="formatBeijingMoment(first.startAt).full" />
-            <NTimelineItem title="第一季成熟" :time="formatBeijingMoment(first.readyAt).full" />
-            <NTimelineItem
-              v-if="second && second.startSource === 'actual-first-harvest' && actualFirstHarvestAt !== null"
-              title="第一次实际收菜 · 第二季起算" :time="formatBeijingMoment(actualFirstHarvestAt).full"
-            />
-            <NTimelineItem v-if="second" title="第二季成熟" :time="formatBeijingMoment(second.readyAt).full" />
+            <NTimelineItem :title="firstHarvestTitle" :time="formatBeijingMoment(firstHarvestAt ?? first.readyAt).full" />
+            <NTimelineItem v-if="second" title="第二季预计收菜" :time="formatBeijingMoment(second.readyAt).full" />
           </NTimeline>
           <NDescriptions label-placement="left" :column="1" bordered size="small">
             <NDescriptionsItem :label="`第一季 · ${LAND[first.land].label}`">{{ seasonFormula(first) }}</NDescriptionsItem>
             <NDescriptionsItem v-if="second" :label="`第二季 · ${LAND[second.land].label}`">{{ seasonFormula(second) }}</NDescriptionsItem>
           </NDescriptions>
           <p v-if="second" class="calculation-note">
-            第二季从{{ second.startSource === 'actual-first-harvest' ? '第一次实际收菜时间' : '第一季预计成熟时间' }}开始计算。
+            第二季从{{ second.startSource === 'actual-first-harvest' ? '第一次实际收菜时间' : '第一季预计收菜时间' }}开始计算。
           </p>
         </template>
         <NEmpty v-else description="填写播种时间后显示计算结论" />

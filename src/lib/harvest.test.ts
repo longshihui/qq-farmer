@@ -54,7 +54,7 @@ describe('calculateHarvest', () => {
     expect(result.second!.startSource).toBe('actual-first-harvest')
   })
 
-  it('rejects an actual harvest before first maturity', () => {
+  it('rejects an actual harvest before the earliest first harvest', () => {
     expect(() => calculateHarvest({
       plantedAt,
       growthHours: 4,

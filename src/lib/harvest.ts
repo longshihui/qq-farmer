@@ -53,7 +53,7 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
   if (actualFirstHarvestAt != null && (
     !Number.isFinite(actualFirstHarvestAt) || actualFirstHarvestAt < firstReadyAt
   )) {
-    throw new RangeError('第一次实际收菜时间不能早于第一季成熟时间')
+    throw new RangeError('第一次实际收菜时间不能早于第一季最早可收菜时间')
   }
 
   const secondBaseSeconds = firstBaseSeconds / 2

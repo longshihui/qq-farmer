@@ -9,6 +9,8 @@ export interface HarvestInput {
   seasons: SeasonCount
   land: LandType
   actualFirstHarvestAt?: number | null
+  /** Reduction on one season of one representative plot. */
+  fertilizer?: { season: SeasonCount; reductionSeconds: number }
 }
 
 export interface SeasonSchedule {
@@ -33,9 +35,18 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
   if (!Number.isFinite(input.plantedAt)) {
     throw new RangeError('播种时间无效')
   }
+  if (input.fertilizer && (
+    !Number.isFinite(input.fertilizer.reductionSeconds) || input.fertilizer.reductionSeconds < 0
+    || (input.fertilizer.season !== 1 && input.fertilizer.season !== 2)
+    || input.fertilizer.season > input.seasons
+  )) {
+    throw new RangeError('化肥配置无效')
+  }
 
   const firstBaseSeconds = input.growthHours * 60 * 60
-  const firstDurationSeconds = firstBaseSeconds * LAND[input.land].tenths / 10
+  const firstLandDurationSeconds = firstBaseSeconds * LAND[input.land].tenths / 10
+  const firstDurationSeconds = Math.max(0, firstLandDurationSeconds
+    - (input.fertilizer?.season === 1 ? input.fertilizer.reductionSeconds : 0))
   const firstReadyAt = input.plantedAt + firstDurationSeconds * 1000
   const first: SeasonSchedule = {
     season: 1,
@@ -57,7 +68,9 @@ export function calculateHarvest(input: HarvestInput): HarvestSchedule {
   }
 
   const secondBaseSeconds = firstBaseSeconds / 2
-  const secondDurationSeconds = secondBaseSeconds * LAND[input.land].tenths / 10
+  const secondLandDurationSeconds = secondBaseSeconds * LAND[input.land].tenths / 10
+  const secondDurationSeconds = Math.max(0, secondLandDurationSeconds
+    - (input.fertilizer?.season === 2 ? input.fertilizer.reductionSeconds : 0))
   const secondStartAt = actualFirstHarvestAt ?? firstReadyAt
 
   return {

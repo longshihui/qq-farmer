@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { NCard, NEmpty, NStatistic, NTag, NTimeline, NTimelineItem } from 'naive-ui'
 import { HARVEST_COUNT_PREFERENCES, LAND } from '@/config'
 import type { DailyPlanResult } from '@/lib/daily-plan'
-import { formatBeijingMoment, toBeijingInput } from '@/lib/harvest'
+import { formatBeijingMoment, formatDuration, toBeijingInput } from '@/lib/harvest'
 
 const props = defineProps<{ result: DailyPlanResult | null }>()
 
@@ -61,7 +61,12 @@ const { combination, resultPreferenceLabel, momentAt } = usePlanPresentation()
             <div v-for="harvest in crop.harvests" :key="harvest.season" class="season-row">
               <span>第{{ harvest.season === 1 ? '一' : '二' }}季</span>
               <strong><time :datetime="new Date(harvest.harvestAt).toISOString()">{{ momentAt(harvest.harvestAt) }}</time> 收菜</strong>
-              <NTag type="success" :bordered="false" size="small">经验权重 +{{ harvest.experienceWeight }}</NTag>
+              <div class="season-tags">
+                <NTag type="success" :bordered="false" size="small">经验权重 +{{ harvest.experienceWeight }}</NTag>
+                <NTag v-if="harvest.fertilizerReductionSeconds" type="warning" :bordered="false" size="small">
+                  使用化肥 · 每块地缩短 {{ formatDuration(harvest.fertilizerReductionSeconds) }}
+                </NTag>
+              </div>
             </div>
           </NTimelineItem>
         </NTimeline>

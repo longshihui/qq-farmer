@@ -20,6 +20,7 @@ interface PlannerFormModel {
   land: LandType
   landOptions: { value: LandType; label: string }[]
   harvestCountPreference: HarvestCountPreference
+  availableFertilizerHours: number | null
   cycleStartTime: string
   sleepWindows: { id: number; start: string; end: string }[]
   selectedSeedIds: string[]
@@ -38,6 +39,7 @@ const emit = defineEmits<{
   updatePlanDate: [value: string | [string, string] | null]
   updateLand: [value: unknown]
   updateHarvestCountPreference: [value: unknown]
+  updateAvailableFertilizerHours: [value: number | null]
   updateCycleStartTime: [value: string | null]
   updateSleepWindow: [id: number, field: 'start' | 'end', value: string | null]
   addSleepWindow: []
@@ -73,7 +75,14 @@ const emit = defineEmits<{
           />
         </NRadioGroup>
       </NFormItem>
+      <NFormItem label="可用化肥小时（24 块地合计）">
+        <NInputNumber
+          :value="form.availableFertilizerHours" :min="0" :precision="0" :step="1"
+          @update:value="emit('updateAvailableFertilizerHours', $event)"
+        />
+      </NFormItem>
     </NForm>
+    <p class="planner-time-hint">背包中的化肥总时长平均用于 24 块地；规划按一块地计算，每块地可缩短输入时长的 1/24。推荐的施肥播种默认在 24 块地同步进行；两季种子只缩短其中一季。</p>
 
     <section class="planner-section" aria-labelledby="cycle-heading">
       <h3 id="cycle-heading" class="planner-section-title">日循环与睡眠</h3>

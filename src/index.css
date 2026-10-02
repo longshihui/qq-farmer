@@ -58,7 +58,7 @@ body {
 .planner-form-card .n-card__content, .planner-result-card .n-card__content { padding: 24px; }
 .planner-field-row { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .planner-field-row .n-form-item { min-width: 0; margin-bottom: 0; }
-.planner-field-row .n-date-picker, .planner-field-row .n-select { width: 100%; }
+.planner-field-row .n-date-picker, .planner-field-row .n-select, .planner-field-row .n-input-number { width: 100%; }
 .planner-section { margin-top: 25px; padding-top: 21px; border-top: 1px solid var(--field-line); }
 .planner-section-title, .combination-block h3 {
   margin: 0;
@@ -129,6 +129,7 @@ body {
 .season-row { display: grid; grid-template-columns: 45px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 9px 0; font-size: 12px; }
 .season-row > span { color: var(--field-muted); }
 .season-row strong { color: var(--field-ink); font-weight: 650; }
+.season-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .planner-result-note { margin: 13px 0 0; color: var(--field-muted); font-size: 11px; }
 .planner-empty-result { padding: 64px 8px; }
 

@@ -63,6 +63,31 @@ describe('calculateHarvest', () => {
       actualFirstHarvestAt: parseBeijingDateTime('2026-09-27T11:59:59'),
     })).toThrow(RangeError)
   })
+
+  it('subtracts each plot’s fertilizer share after the land bonus, on one season only', () => {
+    const first = calculateHarvest({
+      plantedAt, growthHours: 8, seasons: 2, land: 'gold',
+      fertilizer: { season: 1, reductionSeconds: 3600 },
+    })
+    expect(first.first.durationSeconds).toBe(8 * 3600 * 0.8 - 3600)
+    expect(first.second!.durationSeconds).toBe(4 * 3600 * 0.8)
+
+    const second = calculateHarvest({
+      plantedAt, growthHours: 8, seasons: 2, land: 'gold',
+      fertilizer: { season: 2, reductionSeconds: 3600 },
+    })
+    expect(second.first.durationSeconds).toBe(8 * 3600 * 0.8)
+    expect(second.second!.durationSeconds).toBe(4 * 3600 * 0.8 - 3600)
+  })
+
+  it('caps fertilizer reduction at the season duration', () => {
+    const result = calculateHarvest({
+      plantedAt, growthHours: 4, seasons: 1, land: 'normal',
+      fertilizer: { season: 1, reductionSeconds: 100000 },
+    })
+    expect(result.first.durationSeconds).toBe(0)
+    expect(result.first.readyAt).toBe(plantedAt)
+  })
 })
 
 describe('Beijing clock', () => {

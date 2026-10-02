@@ -36,6 +36,16 @@ function useCycleSettings() {
   return { cycleStartTime, sleepWindows, updateCycleStartTime, updateSleepWindow, addSleepWindow, removeSleepWindow }
 }
 
+function useFertilizerSettings() {
+  const availableFertilizerHours = shallowRef<number | null>(0)
+
+  function updateAvailableFertilizerHours(value: number | null) {
+    availableFertilizerHours.value = value
+  }
+
+  return { availableFertilizerHours, updateAvailableFertilizerHours }
+}
+
 function useEventSeeds(selectedSeedIds: Ref<string[]>) {
   const customEventSeeds = ref<CustomEventSeed[]>([])
   const showAddSeedModal = shallowRef(false)
@@ -125,6 +135,7 @@ function usePlannerInputs() {
   const selectedSeedIds = ref<string[]>(SEED_TYPES.map((seed) => seed.id))
   const eventSeeds = useEventSeeds(selectedSeedIds)
   const cycleSettings = useCycleSettings()
+  const fertilizerSettings = useFertilizerSettings()
   const seedGroups = computed(() => SEED_GROUPS.map((group) => ({
     ...group,
     seeds: [
@@ -170,19 +181,20 @@ function usePlannerInputs() {
     landOptions, seedGroups, planDate, land, harvestCountPreference, selectedSeedIds,
     updatePlanDate, updateLand, updateHarvestCountPreference, updateSeeds,
     ...cycleSettings,
+    ...fertilizerSettings,
     ...eventSeeds,
   }
 }
 
 function usePlannerResult(inputs: Pick<ReturnType<typeof usePlannerInputs>,
   'planDate' | 'land' | 'harvestCountPreference' | 'selectedSeedIds' | 'customEventSeeds'
-  | 'cycleStartTime' | 'sleepWindows'>) {
+  | 'cycleStartTime' | 'sleepWindows' | 'availableFertilizerHours'>) {
   const result = shallowRef<DailyPlanResult | null>(null)
   const error = shallowRef<string | null>(null)
 
   watch([inputs.planDate, inputs.land, inputs.harvestCountPreference,
     inputs.selectedSeedIds, inputs.customEventSeeds,
-    inputs.cycleStartTime, inputs.sleepWindows], () => {
+    inputs.cycleStartTime, inputs.sleepWindows, inputs.availableFertilizerHours], () => {
     error.value = null
   }, { deep: true })
 
@@ -202,6 +214,7 @@ function usePlannerResult(inputs: Pick<ReturnType<typeof usePlannerInputs>,
         harvestCountPreference: inputs.harvestCountPreference.value,
         seedIds: inputs.selectedSeedIds.value,
         customEventSeeds: inputs.customEventSeeds.value,
+        availableFertilizerHours: inputs.availableFertilizerHours.value ?? 0,
         now: Date.now(),
       })
     } catch (cause) {
@@ -214,6 +227,7 @@ function usePlannerResult(inputs: Pick<ReturnType<typeof usePlannerInputs>,
 
 const {
   landOptions, seedGroups, planDate, land, harvestCountPreference, selectedSeedIds,
+  availableFertilizerHours, updateAvailableFertilizerHours,
   cycleStartTime, sleepWindows, updateCycleStartTime, updateSleepWindow, addSleepWindow, removeSleepWindow,
   updatePlanDate, updateLand, updateHarvestCountPreference, updateSeeds,
   customEventSeeds, showAddSeedModal, draftGrowthHours, draftSeasons, draftWeight,
@@ -222,11 +236,12 @@ const {
 } = usePlannerInputs()
 const { result, error, generatePlan } = usePlannerResult({
   planDate, land, harvestCountPreference, selectedSeedIds, customEventSeeds,
-  cycleStartTime, sleepWindows,
+  cycleStartTime, sleepWindows, availableFertilizerHours,
 })
 const form = computed(() => ({
   landOptions, seedGroups: seedGroups.value, planDate: planDate.value, land: land.value,
   harvestCountPreference: harvestCountPreference.value, selectedSeedIds: selectedSeedIds.value,
+  availableFertilizerHours: availableFertilizerHours.value,
   cycleStartTime: cycleStartTime.value, sleepWindows: sleepWindows.value,
   showAddSeedModal: showAddSeedModal.value, draftGrowthHours: draftGrowthHours.value,
   draftSeasons: draftSeasons.value, draftWeight: draftWeight.value, eventSeedError: eventSeedError.value,
@@ -241,6 +256,7 @@ const form = computed(() => ({
       @update-plan-date="updatePlanDate"
       @update-land="updateLand"
       @update-harvest-count-preference="updateHarvestCountPreference"
+      @update-available-fertilizer-hours="updateAvailableFertilizerHours"
       @update-cycle-start-time="updateCycleStartTime"
       @update-sleep-window="updateSleepWindow"
       @add-sleep-window="addSleepWindow"

@@ -1,5 +1,5 @@
 import {
-  DEFAULT_HARVEST_COUNT_PREFERENCE, GROWTH_HOURS, isHarvestCountPreference, isLandType, SEED_TYPES,
+  DEFAULT_HARVEST_COUNT_PREFERENCE, GROWTH_HOURS, isHarvestCountPreference, isLandType, LAND, SEED_TYPES,
   type GrowthHours, type HarvestCountPreference, type LandType, type SeasonCount,
 } from '../config'
 import { calculateHarvest, parseBeijingDateTime, toBeijingInput } from './harvest'
@@ -30,6 +30,8 @@ export interface DailyPlanInput {
   harvestCountPreference?: HarvestCountPreference
   seedIds: readonly string[]
   customEventSeeds?: readonly CustomEventSeed[]
+  /** Total fertilizer hours in the bag, shared equally by 24 plots. */
+  availableFertilizerHours?: number
   /** Captured by the caller so planning remains deterministic, including on today's date. */
   now: number
 }
@@ -39,6 +41,8 @@ export interface PlannedHarvest {
   readyAt: number
   harvestAt: number
   experienceWeight: number
+  /** Actual reduction on this season of each plot, after the land bonus and duration cap. */
+  fertilizerReductionSeconds?: number
 }
 
 export interface PlannedCrop {
@@ -71,6 +75,7 @@ interface Candidate {
   harvestCount: number
   completedAt: number
   crops: PlannedCrop[]
+  fertilizerUsed: boolean
 }
 
 type PlanningSeed = {
@@ -123,7 +128,8 @@ function normalizeSleepWindows(dayStart: number, windows: readonly SleepWindow[]
 function isBetterForCount(candidate: Candidate, current: Candidate): boolean {
   return candidate.totalExperienceWeight > current.totalExperienceWeight
     || (candidate.totalExperienceWeight === current.totalExperienceWeight
-      && candidate.completedAt < current.completedAt)
+      && (candidate.completedAt < current.completedAt
+        || (candidate.completedAt === current.completedAt && !candidate.fertilizerUsed && current.fertilizerUsed)))
 }
 
 /** Find the best complete-crop schedule for a 24-hour Beijing-time cycle. */
@@ -141,6 +147,12 @@ export function optimizeDay(input: DailyPlanInput): DailyPlanResult {
     throw new RangeError('收菜次数偏好无效。')
   }
   if (!Number.isFinite(input.now)) throw new RangeError('计算时间无效。')
+  const availableFertilizerHours = input.availableFertilizerHours ?? 0
+  if (!Number.isSafeInteger(availableFertilizerHours) || availableFertilizerHours < 0) {
+    throw new RangeError('可用化肥小时须为非负整数。')
+  }
+  // The bag duration covers all 24 plots; one representative plot gets 1/24.
+  const fertilizerReductionSeconds = availableFertilizerHours * 60 * 60 / 24
   const customEventSeeds = input.customEventSeeds ?? []
   const knownIds = new Set<string>(SEED_TYPES.map((seed) => seed.id))
   for (const seed of customEventSeeds) {
@@ -181,7 +193,7 @@ export function optimizeDay(input: DailyPlanInput): DailyPlanResult {
   })
   const selectedSeeds: PlanningSeed[] = [...SEED_TYPES, ...customPlanningSeeds]
     .filter((seed) => selectedIds.has(seed.id))
-  const memo = new Map<number, Map<number, Candidate>>()
+  const memo = new Map<string, Map<number, Candidate>>()
 
   function nextAwakeAt(time: number): number {
     let target = Math.ceil(time / MINUTE_MS) * MINUTE_MS
@@ -205,17 +217,18 @@ export function optimizeDay(input: DailyPlanInput): DailyPlanResult {
     return mandatorySleeps.every((sleep) => sleep.startAt < time)
   }
 
-  function solve(freeAt: number): Map<number, Candidate> {
-    const cached = memo.get(freeAt)
+  function solve(freeAt: number, fertilizerAvailable: boolean): Map<number, Candidate> {
+    const memoKey = `${freeAt}:${fertilizerAvailable ? 1 : 0}`
+    const cached = memo.get(memoKey)
     if (cached) return cached
 
     const byHarvestCount = new Map<number, Candidate>()
     if (canStopAt(freeAt)) {
-      byHarvestCount.set(0, { totalExperienceWeight: 0, harvestCount: 0, completedAt: freeAt, crops: [] })
+      byHarvestCount.set(0, { totalExperienceWeight: 0, harvestCount: 0, completedAt: freeAt, crops: [], fertilizerUsed: false })
     }
     const plantedAt = nextAwakeAt(Math.max(freeAt, planningFromAt))
     if (plantedAt >= cycleEndAt) {
-      memo.set(freeAt, byHarvestCount)
+      memo.set(memoKey, byHarvestCount)
       return byHarvestCount
     }
 
@@ -226,47 +239,63 @@ export function optimizeDay(input: DailyPlanInput): DailyPlanResult {
         seasons: seed.seasons,
         land: input.land,
       }
-      const initialSchedule = calculateHarvest(baseInput)
       const cropWeight = seed.experienceWeightBySeason.reduce((sum, weight) => sum + weight, 0)
-      for (const firstHarvestAt of harvestOptions(initialSchedule.first.readyAt, plantedAt)) {
-        if (seed.seasons === 2 && firstHarvestAt > cycleEndAt) continue
-        const first: PlannedHarvest = {
-          season: 1, readyAt: initialSchedule.first.readyAt, harvestAt: firstHarvestAt,
-          experienceWeight: seed.experienceWeightBySeason[0],
-        }
-        const secondReadyAt = seed.seasons === 2
-          ? calculateHarvest({ ...baseInput, actualFirstHarvestAt: firstHarvestAt }).second!.readyAt
-          : null
-        const finalHarvestTimes = secondReadyAt === null
-          ? [firstHarvestAt] : harvestOptions(secondReadyAt, plantedAt)
-        for (const lastHarvestAt of finalHarvestTimes) {
-          const harvests: PlannedHarvest[] = [first]
-          if (secondReadyAt !== null) {
-            harvests.push({
-              season: 2, readyAt: secondReadyAt, harvestAt: lastHarvestAt,
-              experienceWeight: seed.experienceWeightBySeason[1]!,
-            })
+      const fertilizerSeasons: (SeasonCount | null)[] = fertilizerAvailable && fertilizerReductionSeconds > 0
+        ? (seed.seasons === 2 ? [null, 1, 2] : [null, 1]) : [null]
+      for (const fertilizerSeason of fertilizerSeasons) {
+        const fertilizer = fertilizerSeason === null ? undefined
+          : { season: fertilizerSeason, reductionSeconds: fertilizerReductionSeconds }
+        const initialSchedule = calculateHarvest({ ...baseInput, fertilizer })
+        const firstReduction = fertilizerSeason === 1
+          ? initialSchedule.first.baseDurationSeconds * LAND[input.land].tenths / 10
+            - initialSchedule.first.durationSeconds : 0
+        for (const firstHarvestAt of harvestOptions(initialSchedule.first.readyAt, plantedAt)) {
+          if (seed.seasons === 2 && firstHarvestAt > cycleEndAt) continue
+          const first: PlannedHarvest = {
+            season: 1, readyAt: initialSchedule.first.readyAt, harvestAt: firstHarvestAt,
+            experienceWeight: seed.experienceWeightBySeason[0],
+            ...(firstReduction > 0 ? { fertilizerReductionSeconds: firstReduction } : {}),
           }
-          const crop: PlannedCrop = { seedId: seed.id, seedLabel: seed.label, plantedAt, harvests }
-          for (const tail of solve(lastHarvestAt).values()) {
-            const candidate: Candidate = {
-              totalExperienceWeight: cropWeight + tail.totalExperienceWeight,
-              harvestCount: seed.seasons + tail.harvestCount,
-              completedAt: tail.completedAt,
-              crops: [crop, ...tail.crops],
+          const secondSchedule = seed.seasons === 2
+            ? calculateHarvest({ ...baseInput, actualFirstHarvestAt: firstHarvestAt, fertilizer }).second!
+            : null
+          const secondReadyAt = secondSchedule?.readyAt ?? null
+          const finalHarvestTimes = secondReadyAt === null
+            ? [firstHarvestAt] : harvestOptions(secondReadyAt, plantedAt)
+          for (const lastHarvestAt of finalHarvestTimes) {
+            const harvests: PlannedHarvest[] = [first]
+            if (secondReadyAt !== null) {
+              const secondReduction = fertilizerSeason === 2
+                ? secondSchedule!.baseDurationSeconds * LAND[input.land].tenths / 10
+                  - secondSchedule!.durationSeconds : 0
+              harvests.push({
+                season: 2, readyAt: secondReadyAt, harvestAt: lastHarvestAt,
+                experienceWeight: seed.experienceWeightBySeason[1]!,
+                ...(secondReduction > 0 ? { fertilizerReductionSeconds: secondReduction } : {}),
+              })
             }
-            const current = byHarvestCount.get(candidate.harvestCount)
-            if (!current || isBetterForCount(candidate, current)) byHarvestCount.set(candidate.harvestCount, candidate)
+            const crop: PlannedCrop = { seedId: seed.id, seedLabel: seed.label, plantedAt, harvests }
+            for (const tail of solve(lastHarvestAt, fertilizerAvailable && fertilizerSeason === null).values()) {
+              const candidate: Candidate = {
+                totalExperienceWeight: cropWeight + tail.totalExperienceWeight,
+                harvestCount: seed.seasons + tail.harvestCount,
+                completedAt: tail.completedAt,
+                crops: [crop, ...tail.crops],
+                fertilizerUsed: fertilizerSeason !== null || tail.fertilizerUsed,
+              }
+              const current = byHarvestCount.get(candidate.harvestCount)
+              if (!current || isBetterForCount(candidate, current)) byHarvestCount.set(candidate.harvestCount, candidate)
+            }
           }
         }
       }
     }
 
-    memo.set(freeAt, byHarvestCount)
+    memo.set(memoKey, byHarvestCount)
     return byHarvestCount
   }
 
-  const candidates = [...solve(planningFromAt).values()]
+  const candidates = [...solve(planningFromAt, fertilizerReductionSeconds > 0).values()]
   if (candidates.length === 0) {
     return {
       date: input.date, land: input.land, harvestCountPreference, generatedAt: input.now,

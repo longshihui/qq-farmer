@@ -214,6 +214,58 @@ describe('experience and harvest-count strategies', () => {
   })
 })
 
+describe('fertilizer planning across 24 plots', () => {
+  it('divides bag hours by 24 and spends the reduction on only one planting', () => {
+    const baseline = plan({ seedIds: ['one-4'] })
+    const result = plan({ seedIds: ['one-4'], availableFertilizerHours: 24 })
+    const fertilized = result.crops.flatMap((crop) => crop.harvests)
+      .filter((harvest) => harvest.fertilizerReductionSeconds)
+
+    expect(result.totalExperienceWeight).toBeGreaterThan(baseline.totalExperienceWeight)
+    expect(fertilized).toHaveLength(1)
+    expect(fertilized[0].fertilizerReductionSeconds).toBe(3600)
+  })
+
+  it('uses at most one season with the full default seed market', () => {
+    const result = plan({
+      seedIds: SEED_TYPES.map((seed) => seed.id), availableFertilizerHours: 24,
+    })
+    expect(result.crops.flatMap((crop) => crop.harvests)
+      .filter((harvest) => harvest.fertilizerReductionSeconds)).toHaveLength(1)
+  })
+
+  it('keeps seconds precision when the bag contains one fertilizer hour', () => {
+    const result = plan({
+      seedIds: ['one-24'], availableFertilizerHours: 1,
+      sleepWindows: [{ start: '00:00', end: '01:00' }],
+    })
+    const fertilized = result.crops.flatMap((crop) => crop.harvests)
+      .filter((harvest) => harvest.fertilizerReductionSeconds)
+    expect(fertilized).toHaveLength(1)
+    expect(fertilized[0].fertilizerReductionSeconds).toBe(150)
+    expect(fertilized[0].readyAt).toBe(fertilized[0].harvestAt - 30000)
+  })
+
+  it('can choose the second season without shortening the first', () => {
+    const result = plan({ seedIds: ['two-24'], availableFertilizerHours: 24 })
+    expect(result.crops).toHaveLength(1)
+    expect(result.crops[0].harvests[0].fertilizerReductionSeconds).toBeUndefined()
+    expect(result.crops[0].harvests[1].fertilizerReductionSeconds).toBe(3600)
+    expect(result.crops[0].harvests[1].readyAt).toBe(at('2026-10-01T19:00'))
+  })
+
+  it('leaves fertilizer unused when sleep erases any scheduling benefit', () => {
+    const baseline = plan({ seedIds: ['one-24'] })
+    const result = plan({ seedIds: ['one-24'], availableFertilizerHours: 1 })
+    expect(result.crops).toEqual(baseline.crops)
+  })
+
+  it('rejects negative or fractional bag hours', () => {
+    expect(() => plan({ availableFertilizerHours: -1 })).toThrow('可用化肥小时须为非负整数')
+    expect(() => plan({ availableFertilizerHours: 1.5 })).toThrow('可用化肥小时须为非负整数')
+  })
+})
+
 describe('input validation', () => {
   it('rejects invalid dates, times, sleep lengths, and strategies', () => {
     expect(() => plan({ date: '2026-02-30' })).toThrow('计划日期无效')

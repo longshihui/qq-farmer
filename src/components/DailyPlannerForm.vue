@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import {
-  NButton, NCard, NCheckbox, NCheckboxGroup, NDatePicker, NForm, NFormItem,
+  NButton, NCard, NDatePicker, NForm, NFormItem,
   NInputNumber, NModal, NRadioButton, NRadioGroup, NSelect, NTimePicker,
 } from 'naive-ui'
 import {
   HARVEST_COUNT_PREFERENCES,
   type GrowthHours, type HarvestCountPreference, type LandType, type SeasonCount,
 } from '@/config'
+import SeedPacketCard from '@/components/seeds/SeedPacketCard.vue'
+import type { SeedCardSeed } from '@/composables/useSeedCardPresentation'
 
-interface SeedDisplay {
-  id: string
-  growthHours: number
+interface SeedDisplay extends SeedCardSeed {
   experienceWeightBySeason: readonly number[]
-  custom: boolean
 }
 
 interface PlannerFormModel {
@@ -44,7 +43,7 @@ const emit = defineEmits<{
   updateSleepWindow: [id: number, field: 'start' | 'end', value: string | null]
   addSleepWindow: []
   removeSleepWindow: [id: number]
-  updateSeeds: [value: Array<string | number>]
+  updateSeedSelection: [id: string, selected: boolean]
   openAddSeed: [seasons: SeasonCount | null]
   removeEventSeed: [id: string]
   closeAddSeed: []
@@ -143,27 +142,23 @@ const emit = defineEmits<{
       </div>
     </template>
     <section class="planner-market-section" aria-label="可用种子">
-      <NCheckboxGroup class="seed-checkbox-group" :value="form.selectedSeedIds" @update:value="emit('updateSeeds', $event)">
+      <div class="seed-card-groups">
         <div v-for="group in form.seedGroups" :key="group.id" class="seed-group">
           <div class="seed-group-head">
             <h4>{{ group.label }}</h4>
             <NButton v-if="group.customSeason !== null" text size="small" @click="emit('openAddSeed', group.customSeason)">添加</NButton>
           </div>
           <div class="seed-grid">
-            <div v-for="seed in group.seeds" :key="seed.id" class="seed-item" :class="{ 'seed-item--custom': seed.custom }">
-              <NCheckbox :value="seed.id" class="seed-choice">
-                <span>{{ seed.growthHours }} 小时</span>
-                <small><span>经验权重</span><strong>{{ seed.experienceWeightBySeason.join(' + ') }}</strong></small>
-              </NCheckbox>
-              <NButton
-                v-if="seed.custom" text size="tiny" class="seed-remove"
-                :aria-label="`删除${group.label}${seed.growthHours}小时种子`"
-                @click.stop="emit('removeEventSeed', seed.id)"
-              >×</NButton>
-            </div>
+            <SeedPacketCard
+              v-for="seed in group.seeds" :key="seed.id"
+              :seed="seed" mode="select" :selected="form.selectedSeedIds.includes(seed.id)"
+              :experience-weights="seed.experienceWeightBySeason"
+              @update:selected="emit('updateSeedSelection', seed.id, $event)"
+              @delete="emit('removeEventSeed', $event)"
+            />
           </div>
         </div>
-      </NCheckboxGroup>
+      </div>
     </section>
 
     <div class="planner-submit">

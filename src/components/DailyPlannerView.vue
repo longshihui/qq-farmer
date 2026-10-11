@@ -142,6 +142,8 @@ function usePlannerInputs() {
       ...SEED_TYPES.filter((seed) => seed.group === group.id).map((seed) => ({
         id: seed.id,
         growthHours: seed.growthHours,
+        seasons: seed.seasons,
+        group: group.id,
         experienceWeightBySeason: seed.experienceWeightBySeason,
         custom: false,
       })),
@@ -150,6 +152,8 @@ function usePlannerInputs() {
         .map((seed) => ({
           id: seed.id,
           growthHours: seed.growthHours,
+          seasons: seed.seasons,
+          group: group.id,
           experienceWeightBySeason: seed.seasons === 1
             ? [seed.experienceWeight] : [seed.experienceWeight, seed.experienceWeight / 2],
           custom: true,
@@ -169,17 +173,20 @@ function usePlannerInputs() {
     if (isHarvestCountPreference(value)) harvestCountPreference.value = value
   }
 
-  function updateSeeds(value: Array<string | number>) {
-    const validIds = new Set<string>([
-      ...SEED_TYPES.map((seed) => seed.id),
-      ...eventSeeds.customEventSeeds.value.map((seed) => seed.id),
-    ])
-    selectedSeedIds.value = value.filter((id): id is string => typeof id === 'string' && validIds.has(id))
+  function updateSeedSelection(id: string, selected: boolean) {
+    const valid = SEED_TYPES.some((seed) => seed.id === id)
+      || eventSeeds.customEventSeeds.value.some((seed) => seed.id === id)
+    if (!valid) return
+    if (selected) {
+      if (!selectedSeedIds.value.includes(id)) selectedSeedIds.value = [...selectedSeedIds.value, id]
+    } else {
+      selectedSeedIds.value = selectedSeedIds.value.filter((seedId) => seedId !== id)
+    }
   }
 
   return {
     landOptions, seedGroups, planDate, land, harvestCountPreference, selectedSeedIds,
-    updatePlanDate, updateLand, updateHarvestCountPreference, updateSeeds,
+    updatePlanDate, updateLand, updateHarvestCountPreference, updateSeedSelection,
     ...cycleSettings,
     ...fertilizerSettings,
     ...eventSeeds,
@@ -229,7 +236,7 @@ const {
   landOptions, seedGroups, planDate, land, harvestCountPreference, selectedSeedIds,
   availableFertilizerHours, updateAvailableFertilizerHours,
   cycleStartTime, sleepWindows, updateCycleStartTime, updateSleepWindow, addSleepWindow, removeSleepWindow,
-  updatePlanDate, updateLand, updateHarvestCountPreference, updateSeeds,
+  updatePlanDate, updateLand, updateHarvestCountPreference, updateSeedSelection,
   customEventSeeds, showAddSeedModal, draftGrowthHours, draftSeasons, draftWeight,
   eventSeedError, growthOptions, seasonOptions, openAddSeed, updateDraftGrowthHours,
   updateDraftWeight, addEventSeed, closeAddSeed, removeEventSeed,
@@ -261,7 +268,7 @@ const form = computed(() => ({
       @update-sleep-window="updateSleepWindow"
       @add-sleep-window="addSleepWindow"
       @remove-sleep-window="removeSleepWindow"
-      @update-seeds="updateSeeds"
+      @update-seed-selection="updateSeedSelection"
       @open-add-seed="openAddSeed"
       @remove-event-seed="removeEventSeed"
       @close-add-seed="closeAddSeed"

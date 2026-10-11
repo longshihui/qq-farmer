@@ -20,13 +20,14 @@ export function useTargetSeedMarket() {
     ...group,
     seeds: [
       ...SEED_TYPES.filter((seed) => seed.group === group.id).map((seed) => ({
-        id: seed.id, growthHours: seed.growthHours, seasons: seed.seasons,
-        experienceWeight: seed.experienceWeightBySeason[0],
+        id: seed.id, growthHours: seed.growthHours, seasons: seed.seasons, group: group.id,
+        experienceWeightBySeason: seed.experienceWeightBySeason,
         custom: false, count: seedIds.value.filter((id) => id === seed.id).length,
       })),
       ...customEventSeeds.value.filter((seed) => seed.seasons === group.customSeason).map((seed) => ({
-        id: seed.id, growthHours: seed.growthHours, seasons: seed.seasons,
-        experienceWeight: seed.experienceWeight,
+        id: seed.id, growthHours: seed.growthHours, seasons: seed.seasons, group: group.id,
+        experienceWeightBySeason: seed.seasons === 1
+          ? [seed.experienceWeight] : [seed.experienceWeight, seed.experienceWeight / 2],
         custom: true, count: seedIds.value.filter((id) => id === seed.id).length,
       })),
     ],

@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import {
-  NButton, NCard, NForm, NFormItem, NInputNumber, NModal, NSelect, NTag,
+  NButton, NCard, NForm, NFormItem, NInputNumber, NModal, NSelect,
 } from 'naive-ui'
 import type { GrowthHours, SeasonCount } from '@/config'
+import SeedPacketCard from '@/components/seeds/SeedPacketCard.vue'
+import type { SeedCardSeed } from '@/composables/useSeedCardPresentation'
 
-interface SeedDisplay {
-  id: string
-  growthHours: number
-  seasons: SeasonCount
-  experienceWeight: number
-  custom: boolean
+interface SeedDisplay extends SeedCardSeed {
+  experienceWeightBySeason: readonly number[]
   count: number
 }
 
@@ -54,18 +52,13 @@ const emit = defineEmits<{
         <NButton v-if="group.customSeason !== null" text size="small" @click="emit('openAddSeed', group.customSeason)">添加活动种子</NButton>
       </div>
       <div class="target-seed-grid">
-        <div v-for="seed in group.seeds" :key="seed.id" class="target-seed" :class="{ 'target-seed--selected': seed.count > 0 }">
-          <div class="target-seed-info">
-            <strong>{{ seed.growthHours }} 小时 · {{ seed.seasons === 1 ? '一季' : '两季' }}</strong>
-            <small v-if="seed.custom">活动种子 · 经验权重 {{ seed.experienceWeight }}</small>
-          </div>
-          <div class="target-seed-actions">
-            <NButton size="tiny" :disabled="seed.count === 0" :aria-label="`减少${group.label}${seed.growthHours}小时种子`" @click="emit('removeSeed', seed.id)">−</NButton>
-            <NTag :bordered="false" type="success" size="small">× {{ seed.count }}</NTag>
-            <NButton size="tiny" type="primary" secondary :aria-label="`加入${group.label}${seed.growthHours}小时种子`" @click="emit('addSeed', seed.id)">加入</NButton>
-            <NButton v-if="seed.custom" text size="tiny" :aria-label="`删除${group.label}${seed.growthHours}小时活动种子`" @click="emit('removeEventSeed', seed.id)">删除</NButton>
-          </div>
-        </div>
+        <SeedPacketCard
+          v-for="seed in group.seeds" :key="seed.id"
+          :seed="seed" mode="quantity" :count="seed.count"
+          :experience-weights="seed.experienceWeightBySeason"
+          @add="emit('addSeed', $event)" @remove="emit('removeSeed', $event)"
+          @delete="emit('removeEventSeed', $event)"
+        />
       </div>
     </section>
     <div class="target-submit">
@@ -106,16 +99,7 @@ const emit = defineEmits<{
 .target-market-hint { margin: 0; color: var(--field-muted); font-size: 12px; line-height: 1.8; }
 .target-seed-group { margin-top: 24px; }
 .target-seed-group h3 { margin: 0; color: var(--field-ink); font-size: 13px; font-weight: 600; }
-.target-seed-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); gap: 10px; margin-top: 10px; }
-.target-seed { display: flex; min-width: 0; flex-direction: column; justify-content: space-between; gap: 16px; padding: 14px; border: 1px solid var(--field-line); border-radius: 12px; background: var(--field-surface-soft, #fafbf7); transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
-.target-seed:hover { border-color: var(--field-green); }
-.target-seed--selected { border-color: var(--field-green); background: var(--field-green-soft, #edf3e8); box-shadow: 0 2px 8px #334a3210; }
-.target-seed-info { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
-.target-seed-info strong { color: var(--field-ink); font-size: 14px; font-weight: 600; }
-.target-seed-info small { color: var(--field-muted); font-size: 12px; overflow-wrap: anywhere; }
-.target-seed-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
-.target-seed-actions .n-tag { min-width: 36px; justify-content: center; font-variant-numeric: tabular-nums; }
+.target-seed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(146px, calc(50% - 6px))), 1fr)); gap: 12px; margin-top: 10px; }
 .target-submit { display: flex; align-items: stretch; flex-direction: column; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--field-line); }
 .target-submit span { color: var(--field-muted); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
-@media (prefers-reduced-motion: reduce) { .target-seed { transition: none; } }
 </style>

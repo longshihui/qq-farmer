@@ -100,33 +100,12 @@ time, .n-statistic-value { font-variant-numeric: tabular-nums; }
 .planner-market-section { min-width: 0; }
 .planner-market-section .seed-group:first-child { margin-top: 0; }
 
-.seed-checkbox-group { display: block; width: 100%; }
+.seed-card-groups { width: 100%; }
 .seed-group { margin-top: 23px; }
 .seed-group-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .seed-group h4 { margin: 0; color: var(--field-muted); font-size: 12px; font-weight: 600; }
 .seed-group-head .n-button { color: var(--field-green); }
-.seed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.seed-item { position: relative; min-width: 0; }
-.seed-choice.n-checkbox {
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
-  min-width: 0;
-  margin: 0;
-  padding: 12px 10px;
-  border: 1px solid var(--field-line);
-  border-radius: 10px;
-  background: #fff;
-  transition: background-color .18s ease, border-color .18s ease;
-}
-.seed-item .seed-choice { height: 100%; }
-.seed-item--custom .seed-choice { padding-right: 24px; }
-.seed-remove { position: absolute; top: 6px; right: 6px; color: #9a6553; }
-.seed-choice.n-checkbox.n-checkbox--checked { border-color: #a1b696; background: #f0f6e9; }
-.seed-choice.n-checkbox:hover { border-color: #8ca77f; background: #f5f9f0; }
-.seed-choice .n-checkbox__label { display: flex; flex: 1; flex-direction: column; min-width: 0; font-size: 13px; font-weight: 500; }
-.seed-choice .n-checkbox__label small { display: flex; flex-direction: column; min-width: 0; margin-top: 4px; color: var(--field-muted); font-size: 12px; font-weight: 400; line-height: 1.55; }
-.seed-choice .n-checkbox__label small strong { font-weight: 400; overflow-wrap: anywhere; }
+.seed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(146px, calc(50% - 6px))), 1fr)); gap: 12px; }
 .add-seed-modal { width: min(420px, calc(100vw - 32px)); }
 .add-seed-modal .n-form { display: grid; gap: 16px; }
 .add-seed-modal .n-select, .add-seed-modal .n-input-number { width: 100%; }
@@ -180,15 +159,12 @@ time, .n-statistic-value { font-variant-numeric: tabular-nums; }
   .harvest-highlight { padding: 18px 20px; }
   .planner-stats { gap: 8px; padding: 14px 10px; }
   .planner-stats .n-statistic .n-statistic-value { font-size: 24px; }
-  .seed-choice.n-checkbox { padding: 11px 8px; }
-  .seed-item--custom .seed-choice { padding-right: 24px; }
   .choice-group .n-radio-button { padding-right: 6px; padding-left: 6px; font-size: 13px; }
 }
 @media (max-width: 389px) {
   .datetime-row { flex-wrap: wrap; }
   .datetime-row .n-button { width: 100%; }
   .planner-sleep-fields { grid-template-columns: 1fr; }
-  .seed-grid { grid-template-columns: 1fr; }
   .planner-stats { grid-template-columns: 1fr; gap: 12px; padding: 16px; }
   .planner-stats .n-statistic + .n-statistic { padding-top: 10px; border-top: 1px solid var(--field-line); }
 }

@@ -34,7 +34,13 @@ const { combination, resultPreferenceLabel, momentAt } = usePlanPresentation()
 
 <template>
   <section class="planner-result-column" aria-label="全天规划结果">
-    <NCard title="推荐方案" class="planner-result-card">
+    <NCard class="planner-result-card">
+      <template #header>
+        <div class="panel-heading">
+          <span class="panel-step" aria-hidden="true">03</span>
+          <span class="panel-title">推荐方案</span>
+        </div>
+      </template>
       <template v-if="result && result.crops.length > 0">
         <p class="planner-result-date">{{ formatBeijingMoment(result.cycleStartAt).date }} · {{ LAND[result.land].label }} · {{ resultPreferenceLabel }}</p>
         <p class="planner-cycle-range">日循环 {{ momentAt(result.cycleStartAt) }} — {{ momentAt(result.cycleEndAt) }}<span v-if="result.planningFromAt > result.cycleStartAt"> · 本次从 {{ momentAt(result.planningFromAt) }} 继续</span></p>

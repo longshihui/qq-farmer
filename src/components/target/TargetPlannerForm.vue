@@ -22,7 +22,13 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <NCard title="种植条件" class="planner-form-card target-card">
+  <NCard class="planner-form-card target-card">
+    <template #header>
+      <div class="panel-heading">
+        <span class="panel-step" aria-hidden="true">01</span>
+        <span class="panel-title">种植条件</span>
+      </div>
+    </template>
     <NForm label-placement="top" :show-feedback="false" class="target-form">
       <NFormItem label="日期（北京时间）">
         <NDatePicker
@@ -60,10 +66,10 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.target-form { display: grid; gap: 16px; }
+.target-form { display: grid; gap: 18px; }
 .target-form :deep(.n-form-item) { min-width: 0; margin: 0; }
 .target-form :deep(.n-date-picker), .target-form :deep(.n-select), .target-form :deep(.n-time-picker) { width: 100%; }
 .target-time-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.target-hint { margin: 16px 0 0; color: var(--field-muted); font-size: 12px; line-height: 1.6; }
+.target-hint { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--field-line); color: var(--field-muted); font-size: 12px; line-height: 1.8; }
 @media (max-width: 520px) { .target-time-fields { grid-template-columns: 1fr; } }
 </style>

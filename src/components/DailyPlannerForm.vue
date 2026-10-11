@@ -56,7 +56,13 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <NCard title="基础规则" class="planner-form-card planner-rules-card">
+  <NCard class="planner-form-card planner-rules-card">
+    <template #header>
+      <div class="panel-heading">
+        <span class="panel-step" aria-hidden="true">01</span>
+        <span class="panel-title">基础规则</span>
+      </div>
+    </template>
     <NForm class="planner-field-row" label-placement="top" :show-feedback="false">
       <NFormItem label="日期（北京时间）">
         <NDatePicker
@@ -129,7 +135,13 @@ const emit = defineEmits<{
 
   </NCard>
 
-  <NCard title="种子市场" class="planner-form-card planner-market-card">
+  <NCard class="planner-form-card planner-market-card">
+    <template #header>
+      <div class="panel-heading">
+        <span class="panel-step" aria-hidden="true">02</span>
+        <span class="panel-title">种子市场</span>
+      </div>
+    </template>
     <section class="planner-market-section" aria-label="可用种子">
       <NCheckboxGroup class="seed-checkbox-group" :value="form.selectedSeedIds" @update:value="emit('updateSeeds', $event)">
         <div v-for="group in form.seedGroups" :key="group.id" class="seed-group">

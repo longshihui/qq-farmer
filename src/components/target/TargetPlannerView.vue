@@ -53,13 +53,13 @@ const {
 </template>
 
 <style scoped>
-.target-layout { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(390px, 1.17fr) minmax(340px, 1fr); gap: 20px; align-items: start; }
+.target-layout { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.08fr) minmax(0, 1.12fr); gap: 20px; align-items: start; }
 .target-settings-panel, .target-market-panel, .target-result-panel { min-width: 0; }
-@media (max-width: 1179px) {
-  .target-layout { grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr); }
+@media (max-width: 1199px) {
+  .target-layout { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
   .target-result-panel { grid-column: 1 / -1; }
 }
-@media (max-width: 900px) {
+@media (max-width: 767px) {
   .target-layout { grid-template-columns: 1fr; }
   .target-result-panel { grid-column: auto; }
 }

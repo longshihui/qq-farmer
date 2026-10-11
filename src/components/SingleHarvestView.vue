@@ -137,7 +137,13 @@ const { view, first, second, firstHarvestAt, firstHarvestTitle, seasonFormula } 
 
 <template>
   <div class="content-grid">
-    <NCard title="种植条件" class="form-card">
+    <NCard class="form-card">
+      <template #header>
+        <div class="panel-heading">
+          <span class="panel-step" aria-hidden="true">01</span>
+          <span class="panel-title">种植条件</span>
+        </div>
+      </template>
       <template #header-extra><NButton text @click="reset">重置</NButton></template>
       <NForm label-placement="top" :show-feedback="false">
         <NFormItem label="播种时间">
@@ -185,9 +191,22 @@ const { view, first, second, firstHarvestAt, firstHarvestTitle, seasonFormula } 
     </NCard>
 
     <section class="results-column" aria-label="计算结论">
-      <NCard title="计算结论" class="conclusion-card">
+      <NCard class="conclusion-card">
+        <template #header>
+          <div class="panel-heading">
+            <span class="panel-step" aria-hidden="true">02</span>
+            <span class="panel-title">计算结论</span>
+          </div>
+        </template>
         <template v-if="first">
-          <NTimeline>
+          <div class="harvest-highlight">
+            <span class="harvest-highlight-label">{{ firstHarvestTitle }}</span>
+            <time class="harvest-highlight-time" :datetime="new Date(firstHarvestAt ?? first.readyAt).toISOString()">
+              {{ formatBeijingMoment(firstHarvestAt ?? first.readyAt).time }}
+            </time>
+            <span class="harvest-highlight-date">{{ formatBeijingMoment(firstHarvestAt ?? first.readyAt).date }}</span>
+          </div>
+          <NTimeline class="harvest-timeline">
             <NTimelineItem title="播种" :time="formatBeijingMoment(first.startAt).full" />
             <NTimelineItem :title="firstHarvestTitle" :time="formatBeijingMoment(firstHarvestAt ?? first.readyAt).full" />
             <NTimelineItem v-if="second" title="第二季预计收菜" :time="formatBeijingMoment(second.readyAt).full" />

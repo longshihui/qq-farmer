@@ -175,7 +175,7 @@ const emit = defineEmits<{
       <NFormItem :label="form.draftSeasons === 2 ? '第一季经验权重' : '经验权重'">
         <NInputNumber :value="form.draftWeight" :min="0" :step="1" @update:value="emit('updateDraftWeight', $event)" />
       </NFormItem>
-      <p class="seed-weight-hint">经验权重用于比较规划方案，不代表游戏实际经验。数值越高越优先；两季种子的第二季经验权重为首季一半。</p>
+      <p class="seed-weight-hint">经验权重用于比较规划方案，不代表游戏实际经验。数值越高越优先；两季活动种子的第二季经验权重为首季一半。</p>
       <p v-if="form.eventSeedError" class="planner-error" role="alert">{{ form.eventSeedError }}</p>
     </NForm>
     <template #footer>

@@ -63,6 +63,8 @@ describe('optimizeDay cycle and sleep', () => {
   it('requires a two-season crop to finish its first harvest by the endpoint', () => {
     const result = plan({ seedIds: ['two-24'] })
     expect(result.crops).toHaveLength(1)
+    expect(result.crops[0].harvests.map((harvest) => harvest.experienceWeight)).toEqual([24, 24])
+    expect(result.totalExperienceWeight).toBe(48)
     expect(formatted(result.crops[0].harvests.map((harvest) => harvest.harvestAt)))
       .toEqual(['2026-10-01T08:00', '2026-10-01T20:00'])
     const late = plan({ seedIds: ['two-24'], cycleStartTime: '20:00', sleepWindows: [{ start: '22:00', end: '08:00' }] })
@@ -188,6 +190,17 @@ describe('optimizeDay cycle and sleep', () => {
 })
 
 describe('experience and harvest-count strategies', () => {
+  it('prioritizes the full experience of ordinary two-season crops for every count strategy', () => {
+    const results = HARVEST_COUNT_PREFERENCES.map((item) => plan({
+      seedIds: ['one-4', 'two-4'], harvestCountPreference: item.value,
+    }))
+    expect(results.map((result) => result.totalExperienceWeight)).toEqual([24, 24, 24])
+    expect(results.map((result) => result.harvestCount)).toEqual([6, 6, 6])
+    expect(results.every((result) => result.crops.some((crop) => crop.seedId === 'two-4'))).toBe(true)
+    expect(results.every((result) => result.crops.flatMap((crop) => crop.harvests)
+      .every((harvest) => harvest.experienceWeight === 4))).toBe(true)
+  })
+
   it('chooses fewer, balanced, or more harvests among equal maximum weights', () => {
     const seedIds = ['one-4', 'one-8', 'one-12', 'one-24']
     const results = (['fewer', 'middle', 'more'] as const)

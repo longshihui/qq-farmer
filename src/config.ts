@@ -25,16 +25,16 @@ type SeedRule = {
   | { seasons: 2; experienceWeightBySeason: readonly [number, number] }
 )
 
-/** 种子配置：各品类的首季时长、季数及每季经验权重，供两个视图共用。 */
+/** 种子配置：普通种子每季经验相同，总权重为一季经验 × 季数；活动种子使用独立权重。 */
 export const SEED_TYPES = [
   { id: 'one-4', group: 'one-season', label: '4 小时 · 一季', growthHours: 4, seasons: 1, experienceWeightBySeason: [4] },
   { id: 'one-8', group: 'one-season', label: '8 小时 · 一季', growthHours: 8, seasons: 1, experienceWeightBySeason: [8] },
   { id: 'one-12', group: 'one-season', label: '12 小时 · 一季', growthHours: 12, seasons: 1, experienceWeightBySeason: [12] },
   { id: 'one-24', group: 'one-season', label: '24 小时 · 一季', growthHours: 24, seasons: 1, experienceWeightBySeason: [24] },
-  { id: 'two-4', group: 'two-season', label: '4 小时 · 两季', growthHours: 4, seasons: 2, experienceWeightBySeason: [4, 2] },
-  { id: 'two-8', group: 'two-season', label: '8 小时 · 两季', growthHours: 8, seasons: 2, experienceWeightBySeason: [8, 4] },
-  { id: 'two-12', group: 'two-season', label: '12 小时 · 两季', growthHours: 12, seasons: 2, experienceWeightBySeason: [12, 6] },
-  { id: 'two-24', group: 'two-season', label: '24 小时 · 两季', growthHours: 24, seasons: 2, experienceWeightBySeason: [24, 12] },
+  { id: 'two-4', group: 'two-season', label: '4 小时 · 两季', growthHours: 4, seasons: 2, experienceWeightBySeason: [4, 4] },
+  { id: 'two-8', group: 'two-season', label: '8 小时 · 两季', growthHours: 8, seasons: 2, experienceWeightBySeason: [8, 8] },
+  { id: 'two-12', group: 'two-season', label: '12 小时 · 两季', growthHours: 12, seasons: 2, experienceWeightBySeason: [12, 12] },
+  { id: 'two-24', group: 'two-season', label: '24 小时 · 两季', growthHours: 24, seasons: 2, experienceWeightBySeason: [24, 24] },
   { id: 'event-12', group: 'event-one', label: '12 小时 · 活动 · 一季', growthHours: 12, seasons: 1, experienceWeightBySeason: [24] },
 ] as const satisfies readonly SeedRule[]
 
